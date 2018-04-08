@@ -34,13 +34,10 @@ def right_left():
 
 left_right()
 
-def land(snow, obj) :
-   s.move_to((snow.pos))
-
 def flake():
    pos = rand_pos()
-   s = shape(CIRCLE, WHITE, pos=(pos[0], -5), 0.1)
+   s = shape(CIRCLE, WHITE, pos=(pos[0], -5), size=0.1)
    s.move_to((pos[0], HEIGHT+5), callback=s.destroy)
-   s.collides(sprites(), land)
+   s.collides(sprites(), s.destroy)
 
 callback(flake, 0.1, FOREVER)
