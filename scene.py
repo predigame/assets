@@ -9,30 +9,9 @@ for x in range(1, 19, 1):
    image('ground2', pos=(x, 14))
 image('ground3', pos=(19,14))
 
-image('house4', pos=(1, 10.65), size=6)
-image('house1', pos=(12, 9.75), size=8)
-image('wheel2', pos=(5,5), size=2).spin()
-
-PIGH = 12
-p = actor('Porter', pos=(-2,PIGH), size=2)
-
-def jumpdone():
-    p.speed(10)
-    p.move_to((18,PIGH), callback=right_left, animation=RUN_RIGHT)
-
-def jumpit():
-    p.speed(5)
-    p.move_to((10,6),(10,PIGH), callback=jumpdone, animation=ATTACK_RIGHT)
-
-def left_right():
-    p.speed(10)
-    p.move_to((10,PIGH), callback=jumpit, animation=RUN_RIGHT)
-
-def right_left():
-    p.speed(3)
-    p.move_to((0, PIGH), callback=left_right, animation=WALK_LEFT)
-
-left_right()
+#image('house4', pos=(1, 10.65), size=6)
+#image('house1', pos=(12, 9.75), size=8)
+#image('wheel2', pos=(5,5), size=2).spin()
 
 def flake():
    pos = rand_pos()
@@ -41,3 +20,36 @@ def flake():
    s.collides(sprites(), s.destroy)
 
 callback(flake, 0.1, FOREVER)
+
+def attack(p):
+   p.act(ATTACK, 1)
+
+p = actor('Porter', pos=(2,11.75), size=2)
+p.mass(5)
+p.keys()
+keydown('return', partial(attack, p))
+keydown('space', p.jump)
+
+def hit(e, p):
+   if e.direction == RIGHT and p.action == ATTACK_LEFT:
+      e.kill()
+   elif e.direction == LEFT and p.action == ATTACK_RIGHT:
+      e.kill()
+   elif e.health > 0:
+      p.kill()
+
+def left():
+   e = actor('Zombie-8', pos=(-2,12.15), size=2).flip()
+   e.speed(randint(1,3))
+   e.move_to((22, 12.15), animation=WALK_RIGHT, callback=e.destroy)
+   e.collides(p, hit)
+
+def right():
+   e = actor('Zombie-3', pos=(22,12.15), size=2)
+   e.speed(randint(1,3))
+   e.move_to((-2, 12.15), animation=WALK_LEFT, callback=e.destroy)
+   e.collides(p, hit)
+
+callback(right, randint(3,5), FOREVER)
+callback(left, randint(3,5), FOREVER)
+keydown('r', reset)
