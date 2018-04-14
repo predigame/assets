@@ -6,7 +6,7 @@ Let's have fun working with Assets!
 
 Getting Started
 ----------
-Let's get started by exploring all of the existing assets that are available for use in our game. 
+Let's get started by exploring all of the existing assets that are available for use in our game.
 
 ### backgrounds
 These are static images that we can use as a background splash image in our game. If you have other background images that you'd like to use, be sure to save them in the `backgrounds` directory. Please note that background images must end with `jpg` or `png` as other types of files will not work in Predigame.
@@ -102,7 +102,7 @@ p = actor('Zombie-4', pos=(-2,12), size=2.5)
 ```
 
 **changing speeds**
-Actors can have a movement speed. Try setting the speed prior each movement. Keep in mind, though, you'll want to vary the speeds otherwise it'll be hard to notice the change. 
+Actors can have a movement speed. Try setting the speed prior each movement. Keep in mind, though, you'll want to vary the speeds otherwise it'll be hard to notice the change.
 
 Here's the full functions to illustrate the varying speeds. *You only need to add the two lines for speed*.
 ```python
@@ -115,7 +115,7 @@ def right_left():
     p.move_to((0, 12), animation=WALK_LEFT, callback=left_right)
 ```
 **add a jump**
-Let's change up the animation for right to left. Instead of running straight left, we'll have Porter stop and jump first. In order to do this, we'll need to break up our callback functions. 
+Let's change up the animation for right to left. Instead of running straight left, we'll have Porter stop and jump first. In order to do this, we'll need to break up our callback functions.
 ```python
 def jumpdone():
     p.speed(10)
@@ -155,7 +155,7 @@ TITLE = 'Scene Example'
 background('bg2')
 ```
 
-The first three lines are basically the same as the first example. This time, though, we add a background. This line in particular will load the file `bg2.png` in the `backgrounds/` directory. 
+The first three lines are basically the same as the first example. This time, though, we add a background. This line in particular will load the file `bg2.png` in the `backgrounds/` directory.
 
 In addition to using one of the existing backgrounds, there are a number of other ways to add a background.
 
@@ -187,7 +187,7 @@ Let's run our code to confirm that the `ground1` (or left) tile and `ground3` (o
 ```python
 for x in range(1, 19, 1):
    image('ground2', pos=(x, 14))
-``` 
+```
 This loop will start counting at `1` and finish after `18`. Each number takes on a particular value. So looking at this loop, it would be the same if we were to write:
 
 ```python
@@ -212,7 +212,7 @@ Now that we have a background splash as well as some grass for a ground, we'll e
 ```python
 image('house4', pos=(1, 10.65), size=6)
 image('house1', pos=(12, 9.75), size=8)
-``` 
+```
 *Keep in mind* - if you don't specify a size, the image will appear in a single grid cell.
 
 Need help aligning images? I may be useful to enable the drawing grid with the following line:
@@ -236,11 +236,161 @@ Here's how our snow flakes work. We first define the function `flake()` that con
 
 The callback function will generate a new flake every `0.05` seconds (that's a lot of flakes!) and repeat this call `FOREVER`!
 
-Example 3: Challenge: Add Porter to the Scene
+Example 3: Piggy Combat
 ----------
+The Zombies are coming and Porter must defend himself! Here's a complete game that will exercise some pretty cool Predigame features. Specifically, we'll cover:
 
-You know what's next? It's time to add our pacing Porter to the scene! See if you can figure this out on your own.
+* Functions and Callbacks - timer and collision
+* Actor Actions
+* Killing Things
+* Basic Gravity and Jumping
+* Keeping Score
 
+### Getting Started
 
+Let's get started by creating a new file `combat.py` and add our standard three lines of code:
 
+```python
+WIDTH = 20
+HEIGHT = 15
+TITLE = 'Piggy Combat'
+```
 
+Now let's define some ground tiles that will cover the bottom of the game canvas:
+
+```python
+image('ground1', pos=(0,14))
+for x in range(1, 19, 1):
+   image('ground2', pos=(x, 14))
+image('ground3', pos=(19,14))
+```
+
+Let's try to save and run our code. Not much to see just yet, but do confirm we have some ground tiles! You can run the game by typing the following line in your terminal:
+
+```python
+pred combat.py
+```
+Now, we need to add Porter.  This is a short hand notation for creating an actor, assigning a mass, and then activating Porter's movements with the arrow keys.
+
+```python
+p = actor('Porter', pos=(2,0), size=3).mass(10).keys()
+```
+
+Mass is a new concept. Things that have a mass will need to obey the rules of gravity.  Try to save and run our code. You'll notice that Porter falls to the top of the grass tiles. We make Porter of size 3 - feel free to change tweak the size, but it will need to be a whole number (no decimal points).
+
+### Jump and Attack Callbacks
+
+Now that Porter has been added to the game we can add keyboard callback functions that will allow us to introduce jump and attack actions.
+
+Here's the line for allowing Porter to jump (activated with space bar key):
+```python
+keydown('space', p.jump)
+```
+
+And now the attack (activated with return/enter key):
+```python
+keydown('return', partial(p.act, ATTACK, 1))
+```
+
+We'll also need to register the game reset key, especially for the next step!
+```python
+keydown('r', reset)
+```
+
+Give these changes a shot!
+
+### Adding Enemies!
+
+This example function will create a zombie every six seconds, from the right and walking to the left.  Make sure you jump over those zombies. You won't survive contact with them!
+
+Add the following code to the bottom of your game:
+
+```python
+def hit(enemy, porter):
+      porter.kill()
+
+def right():
+   e = actor('Zombie-5', pos=(22,12.15), size=2)
+   e.speed(1)
+   e.move_to((-2, 12.15), animation=WALK_LEFT, callback=e.destroy)
+   e.collides(p, hit)
+
+callback(right, 6, FOREVER)
+```
+Give these changes a shot! Feel free to swap out the enemy actor as well as adjust the size and the speed.
+
+Having fun yet? Try making the game more complicated by adding more enemies from the left.
+
+```python
+def left():
+   e = actor('Zombie-8', pos=(-2,12.15), size=2).flip()
+   e.speed(1)
+   e.move_to((22, 12.15), animation=WALK_RIGHT, callback=e.destroy)
+   e.collides(p, hit)
+
+callback(left, 6, FOREVER)
+```
+Again, try giving swapping out actors and as well as adjusting the size and speed.
+
+### Fighting Back
+Our Porter can't do much just yet and just jumping over the zombies can get a little boring. Let's have Porter take out the zombies with his super strong punch.
+
+*This code will replace your existing attack function.* **Make sure you delete it!**
+
+```python
+# when an enemy hits the Porter
+def hit(enemy, porter):
+   # enemy is moving right and Porter is punching from the left
+   if enemy.direction == RIGHT and porter.action == ATTACK_LEFT:
+      enemy.kill()
+   # enemy is moving left and Porter is punching from the right
+   elif enemy.direction == LEFT and porter.action == ATTACK_RIGHT:
+      enemy.kill()
+   # the enemy is alive but Porter didn't act. he dies!
+   elif enemy.health > 0:
+      porter.kill()
+      text('game over')
+      gameover()
+```
+We've added some comments in the function to describe the three possible conditions of a zombie collision:
+
+1. The zombie is walking `RIGHT` and Porter attacks from the `LEFT`
+	* The Zombie Dies!
+2. The zombie is walking `LEFT` and Porter attacks from the `RIGHT`
+	* The Zombie Dies!
+3. Zombie hits a defenseless Porter
+	* Our Piggy Dies!
+
+Try giving this change a shot.
+
+### Whacky Randomness
+We really change up the dynamics of our game by adding some randomness! To do this, there is a special function in Predigame called `randint` that takes two numbers and randomly pics a number in that range. We can use randoms for size, speed, and launch variability.
+
+Look for the line starting with `e.speed` and change to the following. This will change any of the enemies speeds.
+```python
+e.speed(randint(1,5))
+```
+Want more enemies? Try adjusting the timer callbacks to the following (can also be applied to left side):
+```python
+callback(right, randint(3,6), FOREVER)
+```
+
+### Adding a background scene
+Let's try adding some things to the background to make the game look a little more pleasing to the eye. Here are some examples of things that can be added, but you can add anything you want from the `images/` directory.
+
+```python
+# use a background image
+background('bg2')
+
+# create houses in the background (they will not interfere with the player)
+background(image('house4', pos=(1, 10.65), size=6))
+background(image('house1', pos=(12, 9.75), size=8))
+
+# a fence where Porter can jump and get away from the zombies
+for x in range(3):
+   image('fence5', pos=(x+8, 10))
+```
+
+Notice that everything, but the fence, is wrapped in a `background()` function. So these sprites don't participate in the game - they are just for presentation.
+
+What can you do with the fence?
