@@ -11,6 +11,8 @@ HEIGHT = 15
 # title of the window
 TITLE = 'Piggy Combat'
 
+grid()
+
 # use a background image
 background('bg2')
 
@@ -26,7 +28,7 @@ background(image('house1', pos=(12, 9.75), size=8))
 
 # a fence where Porter can jump and get away from the zombies
 for x in range(3):
-   image('fence5', pos=(x+8, 10))
+   image('crate1', pos=(x+8, 11))
 
 # create Porter, give him a mass so he falls down, use arrow keys to move left/right
 p = actor('Porter', pos=(2,11.75), size=2).mass(10).keys()
@@ -35,7 +37,7 @@ p = actor('Porter', pos=(2,11.75), size=2).mass(10).keys()
 keydown('return', partial(p.act, ATTACK, 1))
 
 # jump on the spacebar key
-keydown('space', p.jump)
+keydown('space', partial(p.jump, 7))
 
 # when an enemy hits the Porter
 def hit(enemy, porter):
@@ -65,8 +67,8 @@ def right():
    e.collides(p, hit)
 
 # callback to create enemies
-callback(right, 6, FOREVER)
-callback(left, 6, FOREVER)
+#callback(right, 6, FOREVER)
+#callback(left, 6, FOREVER)
 
 # press 'r' key to restart game
 keydown('r', reset)
