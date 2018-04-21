@@ -340,6 +340,9 @@ Our Porter can't do much just yet and just jumping over the zombies can get a li
 ```python
 # when an enemy hits the Porter
 def hit(enemy, porter):
+   # don't do anything when the enemy is dead
+   if enemy.health == 0:
+      return
    # enemy is moving right and Porter is punching from the left
    if enemy.direction == RIGHT and porter.action == ATTACK_LEFT:
       enemy.kill()
@@ -347,7 +350,7 @@ def hit(enemy, porter):
    elif enemy.direction == LEFT and porter.action == ATTACK_RIGHT:
       enemy.kill()
    # the enemy is alive but Porter didn't act. he dies!
-   elif enemy.health > 0:
+   else:
       porter.kill()
       text('game over')
       gameover()
@@ -388,9 +391,125 @@ background(image('house1', pos=(12, 9.75), size=8))
 
 # a fence where Porter can jump and get away from the zombies
 for x in range(3):
-   image('fence5', pos=(x+8, 10))
+   image('crate1', pos=(x+8, 10), tag=OBSTACLE)
 ```
 
 Notice that everything, but the fence, is wrapped in a `background()` function. So these sprites don't participate in the game - they are just for presentation.
 
-What can you do with the fence?
+What can you do with the crate?
+
+### Keeping Score
+We're going to add two different types of scoring options in the game:
+* *kill counter* - achieve the greatest number of kills
+* *duration counter* - survive the longest amount of time
+
+#### Kill Counter
+**Step 1**: Scorebox Registration
+Add the following code the bottom of your file:
+```python
+score(prefix='Kills: ', pos=LOWER_RIGHT)
+```
+**Step 2**: Tally the Kills
+Add the following code to `hit(enemy, porter)` function. Not that this is not complete code. You'll want to add the `score` line under each `enemy.kill()`:
+
+```python
+score(1, pos=LOWER_RIGHT)
+```
+A completed `hit(enemy, porter)` with scoring enabled will look like this:
+
+```python
+# when an enemy hits the Porter
+def hit(enemy, porter):
+   # don't do anything when the enemy is dead
+   if enemy.health == 0:
+      return
+
+   # enemy is moving right and Porter is punching from the left
+   if enemy.direction == RIGHT and porter.action == ATTACK_LEFT:
+      enemy.kill()
+      score(1, pos=LOWER_RIGHT)
+   # enemy is moving left and Porter is punching from the right
+   elif enemy.direction == LEFT and porter.action == ATTACK_RIGHT:
+      enemy.kill()
+      score(1, pos=LOWER_RIGHT)
+   # the enemy is alive but Porter didn't act. he dies!
+   else:
+      porter.kill()
+      text('game over')
+      gameover()
+```
+
+#### Duration Counter
+This is a really easy counter that can be added without too much work. Just add the following line to the bottom of your code file:
+
+```python
+stopwatch(prefix='Survival: ')
+```
+### Falling Blades of Death
+In addition to needing to defined yourself from a continuous stream of enemies, you can also add falling saw blades of death. This works a little like snow, but a little more deadly.
+
+```python
+# a callback when the player is hit by a blade
+def die(blade, porter):
+   if porter.health > 0:
+       porter.kill()
+       text('game over')
+       gameover()
+
+# falling blades of death
+def fall():
+   pos = rand_pos()
+   b = image('saw', pos=(pos[0], -5), size=1)
+   b.speed(randint(1,6))
+   b.move_to((pos[0], HEIGHT+5), callback=b.destroy)
+   b.collides(p, die)
+callback(fall, randint(1, 5), FOREVER)
+```
+### Fun Ways to Die
+When a saw blade hits Porter, the game executes a `porter.kill()` line. Try this little mod:
+
+```python
+def die(blade, porter):
+   if porter.health > 0:
+       porter.spin(0.25).move_to((porter.pos[0], HEIGHT), animation=DIE_FRONT, callback=porter.kill)
+       text('game over')
+       gameover(10)
+```
+Can you add your own fun way to die? How about a blood splatter?
+
+### Challenge Problems
+
+#### Build a crate stairway to heaven
+The following code adds a few crates for Porter to jump up and avoid a stream of zombies.
+
+```python
+for x in range(5):
+   image('crate1', pos=(x, 11), tag=OBSTACLE)
+```
+*How do you arrange crates (think many for loops) to reach the top of the screen?*
+
+#### Add effects to the saw blades?
+
+Try adding a `.spin()` or a `.pulse()` to the falling blades. Need more help with effects? Checkout the [this tutorial](http://predigame.io/examples/sprites/#sprite-effects) on the Predigame Website.
+
+#### Hacking Jumps
+Take a look at this pretty uninteresting line of code:
+
+```python
+keydown('space', p.jump)
+```
+
+Porter jumps anytime a spacebar is hit. It's pretty easy to change the behavior of jump by adding a `partial` and the passing in a few parameters.
+
+**THE HIGH JUMP**
+```python
+keydown('space', partial(p.jump,height=10))
+```   
+**THE LONG JUMP**
+```python
+keydown('space', partial(p.jump,arc=[5,5,5,5,5,5,5,5,5]))
+```   
+How do you combine them? How do you register different types of jumps to different keyboard keys?
+
+
+   
