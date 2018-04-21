@@ -13,6 +13,7 @@
 # vary _health
 # complex obstacles
 # build and destroy to get a goal
+# pitfalls
 
 # a window 20 grid blocks wide by 15 grid height
 WIDTH = 20
