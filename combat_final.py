@@ -34,7 +34,7 @@ image('ground3', pos=(19,14))
 background(image('house4', pos=(1, 10.65), size=6))
 background(image('house1', pos=(12, 9.75), size=8))
 
-# a fence where Porter can jump and get away from the zombies
+# a crate where Porter can jump and get away from the zombies
 for x in range(5):
    image('crate1', pos=(x, 11), tag=OBSTACLE)
 
@@ -67,7 +67,7 @@ def hit(enemy, porter):
    # the enemy is alive but Porter didn't act. he dies!
    else:
       porter.kill()
-      text('You survived {} seconds'.format(time()))
+      text('game over')
       gameover()
 
 # create an enemy from the left. move right.
