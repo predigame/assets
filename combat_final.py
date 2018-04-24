@@ -1,9 +1,9 @@
 # spin enemies
 # - keep score (hits, survival time, health)
 # - falling saw blades of death
-# wacky jumps
+# - wacky jumps
 # - duration goal
-# throw something at zombies
+# - throw something at zombies
 # have zombies fall out of the sky
 # golden star reward
 # - make the piggy fall and die (fun ways to die)
@@ -14,6 +14,7 @@
 # complex obstacles
 # build and destroy to get a goal
 # pitfalls
+# moving floors
 
 # a window 20 grid blocks wide by 15 grid height
 WIDTH = 20
@@ -26,30 +27,37 @@ TITLE = 'Piggy Combat'
 background('bg2')
 
 # ground tiles
-image('ground1', pos=(0,14))
+image('ground1', pos=(0,14), tag=OBSTACLE)
 for x in range(1, 19, 1):
-   image('ground2', pos=(x, 14))
-image('ground3', pos=(19,14))
+   image('ground2', pos=(x, 14), tag=OBSTACLE)
+image('ground3', pos=(19,14), tag=OBSTACLE)
 
 ## create houses in the background (they will not interfere with the player)
 background(image('house4', pos=(1, 10.65), size=6))
 background(image('house1', pos=(12, 9.75), size=8))
 
 # a crate where Porter can jump and get away from the zombies
-for x in range(5):
-   image('crate1', pos=(x, 11), tag=OBSTACLE)
-
+for x in range(3):
+    image('crate1', pos=(x+8, 11), tag=OBSTACLE)
 for x in range(2):
-   image('crate1', pos=(x+6, 8), tag=OBSTACLE)
+    image('crate1', pos=(x+12, 8), tag=OBSTACLE)
+for x in range(2):
+    image('crate1', pos=(x+8, 6), tag=OBSTACLE)
+for x in range(2):
+    image('crate1', pos=(x+12, 4), tag=OBSTACLE)
+for x in range(2):
+    image('crate1', pos=(x+8, 2), tag=OBSTACLE)
+for x in range(5):
+    image('crate1', pos=(x, 2), tag=OBSTACLE)
 
 # create Porter, give him a mass so he falls down, use arrow keys to move left/right
-p = actor('Porter', pos=(17,0), size=2).mass(10).keys()
+p = actor('Porter', pos=(0,-3), size=2).mass(10).keys()
 
 # throw a punch on the return/enter key
 keydown('return', partial(p.act, ATTACK, 1))
 
 # jump on the spacebar key
-keydown('space', partial(p.jump, 7))
+keydown('space', p.jump)
 
 # when an enemy hits the Porter
 def hit(enemy, porter):
@@ -81,7 +89,7 @@ def hit(enemy, porter):
 #      callback(partial(monitor, e, partial(move_right, e)), 0.75)
 
 def left():
-   e = actor('Zombie-8', pos=(22,12.15), size=2).flip()
+   e = actor('Zombie-8', pos=(22,12.15), size=2, tag='enemy').flip()
    #e.mass(10)
    e.speed(1)
    e.move_to((22, 12.15), animation=WALK_RIGHT)#.spin(0.3, 25)
@@ -91,7 +99,7 @@ callback(left, 6, FOREVER)
 
 # create an enemy from the right. move left.
 def right():
-   e = actor('Zombie-3', pos=(22,12.15), size=2)
+   e = actor('Zombie-3', pos=(22,12.15), size=2, tag='enemy')
    e.speed(1)
    e.move_to((-2, 12.15), animation=WALK_LEFT, callback=e.destroy)
    e.collides(p, hit)
@@ -100,11 +108,9 @@ callback(right, 6, FOREVER)
 # make saw blades fall
 def die(blade, porter):
    if porter.health > 0:
-       #shape(CIRCLE, RED, pos=porter.pos).pulse(0.2, 3)
-       #porter.kill(delay=5)
        porter.spin(0.25).move_to((porter.pos[0], HEIGHT), animation=DIE_FRONT, callback=porter.kill)
        text('game over')
-       #gameover()
+       gameover()
 
 def fall():
    pos = rand_pos()
@@ -112,7 +118,7 @@ def fall():
    b.speed(randint(1,6))
    b.move_to((pos[0], HEIGHT+5), callback=b.destroy)
    b.collides(p, die)
-callback(fall, randint(1, 5), FOREVER)
+#callback(fall, randint(1, 5), FOREVER)
 
 def monitor(a, cb):
    """ used by computer player (red and blue) to track progress and potentially replay movement """
@@ -126,3 +132,47 @@ stopwatch(prefix='Survival: ')
 score(prefix='Kills: ', pos=LOWER_RIGHT)
 # press 'r' key to restart game
 keydown('r', reset)
+
+# shoot a bullet
+def shot(bullet, enemy):
+   if enemy.health > 0:
+       score(1, pos=LOWER_RIGHT)
+       bullet.destroy()
+       enemy.kill()
+
+def shoot():
+   p.act(ATTACK,1)
+   b = shape(CIRCLE, YELLOW, pos=(p.x+0.75, p.y+1), size=0.2)
+   b.speed(10).mass(10)
+   b.move_to((p.facing()[0], (p.y+1)), callback=b.destroy)
+   b.collides(get('enemy'), shot)
+keydown('s', shoot)
+
+# build walls
+def build(x,y):
+   s = image('crate1', (p.x+x, p.y+y), tag=OBSTACLE, order=BACK)
+def destroy():
+   next_area = to_area(p.x, p.y, p.width, p.height, bottom_only=True)
+   for a in next_area:
+      b = at((a[0],a[1]+1))
+      if b is not None:
+         if isinstance(b, Sprite):
+            b.destruct(0)
+         else:
+            for c in b:
+                c.destruct(0)
+keydown('q', partial(build, -1, 2))
+keydown('w', partial(build, 1, 2))
+keydown('e', destroy)
+keydown('r', destroy)
+
+# bats fly in
+def flyin():
+   y = rand_pos()[1]
+   x = choice([-5, WIDTH+5])
+   e =  actor('Bat', pos=(x,y), size=2, tag='enemy')
+   e.speed(1)
+   e.move_to(p.pos, animation=FLY_FRONT, callback=e.destroy)
+   e.collides(p, die)
+   callback(flyin, randint(1,5))
+callback(flyin, randint(1,5))
