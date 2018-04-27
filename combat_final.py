@@ -118,7 +118,7 @@ def fall():
    b.speed(randint(1,6))
    b.move_to((pos[0], HEIGHT+5), callback=b.destroy)
    b.collides(p, die)
-#callback(fall, randint(1, 5), FOREVER)
+callback(fall, randint(1, 5), FOREVER)
 
 def monitor(a, cb):
    """ used by computer player (red and blue) to track progress and potentially replay movement """
@@ -143,12 +143,12 @@ def shot(bullet, enemy):
 def shoot():
    p.act(ATTACK,1)
    b = shape(CIRCLE, YELLOW, pos=(p.x+0.75, p.y+1), size=0.2)
-   b.speed(10).mass(10)
+   b.speed(10)
    b.move_to((p.facing()[0], (p.y+1)), callback=b.destroy)
    b.collides(get('enemy'), shot)
 keydown('s', shoot)
 
-# build walls
+# build and destroy crates
 def build(x,y):
    s = image('crate1', (p.x+x, p.y+y), tag=OBSTACLE, order=BACK)
 def destroy():
@@ -161,10 +161,17 @@ def destroy():
          else:
             for c in b:
                 c.destruct(0)
-keydown('q', partial(build, -1, 2))
-keydown('w', partial(build, 1, 2))
-keydown('e', destroy)
-keydown('r', destroy)
+keydown('1', partial(build, -1, 2))
+keydown('2', partial(build, 1, 2))
+keydown('q', destroy)
+keydown('w', destroy)
+
+# check for falling to death events
+def monitor():
+  if p.y >= HEIGHT+5:
+    text('bye bye baby')
+    gameover()
+callback(monitor, 2, FOREVER)
 
 # bats fly in
 def flyin():
@@ -174,5 +181,5 @@ def flyin():
    e.speed(1)
    e.move_to(p.pos, animation=FLY_FRONT, callback=e.destroy)
    e.collides(p, die)
-   callback(flyin, randint(1,5))
-callback(flyin, randint(1,5))
+   callback(flyin, randint(3,7))
+callback(flyin, randint(3,7))

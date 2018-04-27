@@ -6,10 +6,10 @@ TITLE = 'Piggy Combat'
 background('bg2')
 
 # ground tiles
-image('ground1', pos=(0, HEIGHT-1))
-image('ground3', pos=(WIDTH-1, HEIGHT-1))
+image('ground1', pos=(0, HEIGHT-1), tag=OBSTACLE)
+image('ground3', pos=(WIDTH-1, HEIGHT-1), tag=OBSTACLE)
 for x in range(1, WIDTH-1, 1):
-    image('ground2', pos=(x, HEIGHT-1))
+    image('ground2', pos=(x, HEIGHT-1), tag=OBSTACLE)
 
 # background scene
 background(image('house4', pos=(1, 10.65), size=6))
