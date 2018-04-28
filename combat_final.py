@@ -51,7 +51,7 @@ for x in range(5):
     image('crate1', pos=(x, 2), tag=OBSTACLE)
 
 # create Porter, give him a mass so he falls down, use arrow keys to move left/right
-p = actor('Porter', pos=(0,-3), size=2).mass(10).keys()
+p = actor('Porter', pos=(0,-3), size=2, tag='Porter').mass(10).keys()
 
 # throw a punch on the return/enter key
 keydown('return', partial(p.act, ATTACK, 1))
@@ -79,6 +79,20 @@ def hit(enemy, porter):
       text('game over')
       gameover()
 
+def emonitor():
+   for e in get('enemy'):
+      print('{} ==> {}'.format(e.pos, e.action))
+      if e.action.startswith(IDLE):
+         e.move_to((e.attributes['destination'], e.y))
+      elif randint(1,4) == 2:
+         e.jump()
+      elif randint(1,5) == 2:
+         e.stop()
+         shoot(e, ['Porter', 'enemy', 'bat'])
+      if e.y >= HEIGHT:
+         e.kill()
+callback(emonitor, 0.5, FOREVER)
+
 # create an enemy from the left. move right.
 #def move_right(e):
 #   print('move_right')
@@ -89,19 +103,21 @@ def hit(enemy, porter):
 #      callback(partial(monitor, e, partial(move_right, e)), 0.75)
 
 def left():
-   e = actor('Zombie-8', pos=(22,12.15), size=2, tag='enemy').flip()
-   #e.mass(10)
+   e = actor('Zombie-8', pos=(0,0), size=2, tag='enemy').flip()
+   e.mass(10)
    e.speed(1)
-   e.move_to((22, 12.15), animation=WALK_RIGHT)#.spin(0.3, 25)
+   e.attributes['destination'] = 22
+   e.move_to((22, 0), animation=WALK_RIGHT)
    e.collides(p, hit)
-   #callback(partial(monitor, e, partial(move_right, e)), 0.75)
 callback(left, 6, FOREVER)
 
 # create an enemy from the right. move left.
 def right():
-   e = actor('Zombie-3', pos=(22,12.15), size=2, tag='enemy')
+   e = actor('Zombie-3', pos=(WIDTH-1,12.15), size=2, tag='enemy')
    e.speed(1)
-   e.move_to((-2, 12.15), animation=WALK_LEFT, callback=e.destroy)
+   e.mass(10)
+   e.attributes['destination'] = -2
+   e.move_to((-2, 12.15), animation=WALK_LEFT)
    e.collides(p, hit)
 callback(right, 6, FOREVER)
 
@@ -118,35 +134,35 @@ def fall():
    b.speed(randint(1,6))
    b.move_to((pos[0], HEIGHT+5), callback=b.destroy)
    b.collides(p, die)
-callback(fall, randint(1, 5), FOREVER)
+#callback(fall, randint(1, 5), FOREVER)
 
-def monitor(a, cb):
-   """ used by computer player (red and blue) to track progress and potentially replay movement """
-   if a.action.startswith(IDLE):
-      cb()
-   if not a.action.startswith(DIE):
-      callback(partial(monitor, a, cb), 0.5)
 
 # stopwatch
 stopwatch(prefix='Survival: ')
 score(prefix='Kills: ', pos=LOWER_RIGHT)
+
 # press 'r' key to restart game
 keydown('r', reset)
 
 # shoot a bullet
-def shot(bullet, enemy):
-   if enemy.health > 0:
+def shot(bullet, victim):
+   if victim.health > 0:
        score(1, pos=LOWER_RIGHT)
+       victim.kill()
        bullet.destroy()
-       enemy.kill()
 
-def shoot():
-   p.act(ATTACK,1)
-   b = shape(CIRCLE, YELLOW, pos=(p.x+0.75, p.y+1), size=0.2)
+def shoot(a, tags):
+   a.act(ATTACK,1)
+   b = shape(CIRCLE, YELLOW, pos=(a.x+0.75, a.y+1), size=0.2)
    b.speed(10)
-   b.move_to((p.facing()[0], (p.y+1)), callback=b.destroy)
-   b.collides(get('enemy'), shot)
-keydown('s', shoot)
+   b.move_to((a.facing()[0], (a.y+1)), callback=b.destroy)
+   for x in tags:
+      actors = get(x)
+      if a in actors:
+        actors.remove(a)
+      b.collides(actors, shot)
+
+keydown('s', partial(shoot, p, ['enemy', 'bat']))
 
 # build and destroy crates
 def build(x,y):
@@ -177,9 +193,9 @@ callback(monitor, 2, FOREVER)
 def flyin():
    y = rand_pos()[1]
    x = choice([-5, WIDTH+5])
-   e =  actor('Bat', pos=(x,y), size=2, tag='enemy')
+   e =  actor('Bat', pos=(x,y), size=2, tag='bat')
    e.speed(1)
    e.move_to(p.pos, animation=FLY_FRONT, callback=e.destroy)
    e.collides(p, die)
    callback(flyin, randint(3,7))
-callback(flyin, randint(3,7))
+#callback(flyin, randint(3,7))
