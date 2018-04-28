@@ -482,20 +482,26 @@ Bullets may not be the right term since Porter doesn't have a weapon, but these 
 
 ```python
 # shoot a bullet
-def shot(bullet, enemy):
-   if enemy.health > 0:
+def shot(bullet, victim):
+   if victim.health > 0:
        score(1, pos=LOWER_RIGHT)
+       victim.kill()
        bullet.destroy()
-       enemy.kill()
 
-def shoot():
-   p.act(ATTACK,1)
-   b = shape(CIRCLE, YELLOW, pos=(p.x+0.75, p.y+1), size=0.2)
+def shoot(a, tags):
+   a.act(ATTACK,1)
+   b = shape(CIRCLE, YELLOW, pos=(a.x+0.75, a.y+1), size=0.2)
    b.speed(10)
-   b.move_to((p.facing()[0], (p.y+1)), callback=b.destroy)
-   b.collides(get('enemy'), shot)
-keydown('s', shoot)
+   b.move_to((a.facing()[0], (a.y+1)), callback=b.destroy)
+   for x in tags:
+      # make sure we don't shoot ourselves!
+      actors = get(x)
+      if a in actors:
+        actors.remove(a)
+      b.collides(actors, shot)
+keydown('s', partial(shoot, p, ['enemy', 'bat']))
 ```
+
 The `s` key triggers the throw. What happens when you tweak the speed? Try replacing the bullet with an image.
 
 ### Building
@@ -543,13 +549,14 @@ In addition to falling blades, here's a fun way to have pesky bats fly in to Por
 def flyin():
    y = rand_pos()[1]
    x = choice([-5, WIDTH+5])
-   e =  actor('Bat', pos=(x,y), size=2, tag='enemy')
+   e =  actor('Bat', pos=(x,y), size=2, tag='bat')
    e.speed(1)
    e.move_to(p.pos, animation=FLY_FRONT, callback=e.destroy)
    e.collides(p, die)
    callback(flyin, randint(3,7))
 callback(flyin, randint(3,7))
 ```
+
 Notice we recycle the `die` function? That's one of the cool things you can do with functions. They make our code reusable.
 
 
@@ -589,3 +596,8 @@ keydown('space', partial(p.jump,height=10))
 keydown('space', partial(p.jump,arc=[5,5,5,5,5,5,5,5,5]))
 ```   
 How do you combine them? How do you register different types of jumps to different keyboard keys?
+
+#### The Annoying Bee [HARD]
+
+Try adding in a Bee actor that follows Porter around. The Bee doesn't have to attack, but should fly around Porter.
+**HINT:** You'll need to use something like the `monitor` function to check and move the Bee.
