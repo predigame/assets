@@ -477,7 +477,89 @@ def die(blade, porter):
 ```
 Can you add your own fun way to die? How about a blood splatter?
 
-### Challenge Problems
+### Bullets!
+Bullets may not be the right term since Porter doesn't have a weapon, but these are pretty fun to watch and devastating for the enemy.
+
+```python
+# shoot a bullet
+def shot(bullet, victim):
+   if victim.health > 0:
+       score(1, pos=LOWER_RIGHT)
+       victim.kill()
+       bullet.destroy()
+
+def shoot(a, tags):
+   a.act(ATTACK,1)
+   b = shape(CIRCLE, YELLOW, pos=(a.x+0.75, a.y+1), size=0.2)
+   b.speed(10)
+   b.move_to((a.facing()[0], (a.y+1)), callback=b.destroy)
+   for x in tags:
+      # make sure we don't shoot ourselves!
+      actors = get(x)
+      if a in actors:
+        actors.remove(a)
+      b.collides(actors, shot)
+keydown('s', partial(shoot, p, ['enemy', 'bat']))
+```
+
+The `s` key triggers the throw. What happens when you tweak the speed? Try replacing the bullet with an image.
+
+### Building
+This code allows us to build and destroy blocks on the fly!
+
+```python
+# build and destroy crates
+def build(x,y):
+   s = image('crate1', (p.x+x, p.y+y), tag=OBSTACLE, order=BACK)
+def destroy():
+   next_area = to_area(p.x, p.y, p.width, p.height, bottom_only=True)
+   for a in next_area:
+      b = at((a[0],a[1]+1))
+      if b is not None:
+         if isinstance(b, Sprite):
+            b.destruct(0)
+         else:
+            for c in b:
+                c.destruct(0)
+keydown('1', partial(build, -1, 2))
+keydown('2', partial(build, 1, 2))
+keydown('q', destroy)
+keydown('w', destroy)
+```
+Try swapping out the image. What happens if you destroy the ground sprites?
+
+#### Monitoring the "death jump"
+By default the game doesn't know anything about the "ground". Here's a simple way to confirm if Porter makes a "death jump":
+
+```python
+# check for falling to death events
+def monitor():
+  if p.y >= HEIGHT+5:
+    text('bye bye baby')
+    gameover()
+callback(monitor, 2, FOREVER)
+```
+
+### Bats!
+
+In addition to falling blades, here's a fun way to have pesky bats fly in to Porter's position.
+
+```python
+# bats fly in
+def flyin():
+   y = rand_pos()[1]
+   x = choice([-5, WIDTH+5])
+   e =  actor('Bat', pos=(x,y), size=2, tag='bat')
+   e.speed(1)
+   e.move_to(p.pos, animation=FLY_FRONT, callback=e.destroy)
+   e.collides(p, die)
+   callback(flyin, randint(3,7))
+callback(flyin, randint(3,7))
+```
+
+Notice we recycle the `die` function? That's one of the cool things you can do with functions. They make our code reusable.
+
+### General Challenge Problems
 
 #### Build a crate stairway to heaven
 The following code adds a few crates for Porter to jump up and avoid a stream of zombies.
@@ -511,5 +593,7 @@ keydown('space', partial(p.jump,arc=[5,5,5,5,5,5,5,5,5]))
 ```   
 How do you combine them? How do you register different types of jumps to different keyboard keys?
 
+#### The Annoying Bee [HARD]
 
-   
+Try adding in a Bee actor that follows Porter around. The Bee doesn't have to attack, but should fly around Porter.
+**HINT:** You'll need to use something like the `monitor` function to check and move the Bee.
