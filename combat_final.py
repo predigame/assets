@@ -161,7 +161,6 @@ def shoot(a, tags):
       if a in actors:
         actors.remove(a)
       b.collides(actors, shot)
-
 keydown('s', partial(shoot, p, ['enemy', 'bat']))
 
 # build and destroy crates
