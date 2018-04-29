@@ -559,10 +559,6 @@ callback(flyin, randint(3,7))
 
 Notice we recycle the `die` function? That's one of the cool things you can do with functions. They make our code reusable.
 
-
-
-
-
 ### General Challenge Problems
 
 #### Build a crate stairway to heaven
