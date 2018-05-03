@@ -559,6 +559,125 @@ callback(flyin, randint(3,7))
 
 Notice we recycle the `die` function? That's one of the cool things you can do with functions. They make our code reusable.
 
+### Enemies Fight Back!
+Besides just *"walking"* left and right, we're going have our enemies obey the same rules of gravity as our player! Along with gravity, the enemies will be able to jump and **SHOOT YOU**!
+
+#### New left and right functions
+If you have existing `left()` and `right()` functions, you will want to remove and replace with the following:
+```python
+# create an enemy from the left. move right.
+def left():
+   e = actor('Zombie-8', pos=(0,0), size=2, tag='enemy').flip()
+   e.mass(10)
+   e.speed(1)
+   e.attributes['destination'] = 22
+   e.move_to((22, 0), animation=WALK_RIGHT)
+   e.collides(p, hit)
+callback(left, 6, FOREVER)
+
+# create an enemy from the right. move left.
+def right():
+   e = actor('Zombie-3', pos=(WIDTH-1,12.15), size=2, tag='enemy')
+   e.speed(1)
+   e.mass(10)
+   e.attributes['destination'] = -2
+   e.move_to((-2, 12.15), animation=WALK_LEFT)
+   e.collides(p, hit)
+callback(right, 6, FOREVER)
+```
+The key difference is that each enemy has a `mass` and a `destination` attribute. The destination is used to assist the enemy to finding their way home.
+
+#### Enemy Monitor
+Enemies are tracked with the following callback function. The function handles destroying as well as move the enemy and perform a random jump or shoot!
+```python
+def emonitor():
+   for e in get('enemy'):
+      # the enemy is dead.. destroy it!
+      if e.action.startswith(DIE) and e.health == 0:
+         e.destruct(1.5)
+         continue
+      # the enemy is IDLE.. move it!
+      if e.action.startswith(IDLE):
+         e.move_to((e.attributes['destination'], e.y))
+      elif randint(1,4) == 2:
+         # a random jump!
+         e.jump()
+      elif randint(1,5) == 2:
+         # a random shoot!
+         e.stop()
+         shoot(e, ['Porter', 'enemy', 'bat'])
+      if e.y >= HEIGHT:
+         # the enemy fell into the void.. kill it!
+         e.kill()
+callback(emonitor, 0.5, FOREVER)
+```
+### Moving Spikes Obstacle
+This obstacle raises spikes through a crate. One touch and there is instant death.
+```python
+def spikeit(x, y, tags):
+   spikes = image('spike2', pos=(x,y-2), size=3).speed(0.25)
+   crate = image('crate1', pos=(x,y), size=3, tag=OBSTACLE)
+   def _up_():
+     for a in tags:
+        spikes.collides(get(a), die)
+     spikes.move_to((x,y-2.5), callback=_down_)
+   def _down_():
+     for a in tags:
+        spikes.collides(get(a), die)
+     spikes.move_to((x,y), callback=_up_)
+   _up_()
+spikeit(7.0,HEIGHT-1, ['Porter', 'enemy'])
+spikeit(10.0,HEIGHT-1, ['Porter', 'enemy'])
+```
+
+### Tossing Money
+Here's a chest that tosses bags of money. Be careful!
+
+```python
+def chestomoney(x, y, tags):
+   offset = rand(-1, 1)
+   funnelimg = image('chest2', pos=(x+offset,y), size=2)
+   def _fire_():
+      bag = image('money1', pos=(x+1+offset, y), size=0.5, order=BACK)
+      bag.move_to((x+1+offset, rand_pos()[1]),(randint(x-5, x+5), HEIGHT+5), callback=bag.destroy)
+      for a in tags:
+         bag.collides(get(a), die)
+      callback(_fire_, randint(0,1))
+   callback(_fire_, randint(0,1))
+chestomoney(2,12, ['Porter', 'enemy', 'Bat'])
+```
+### Firing Mushrooms
+Make sure to jump over these firing mushrooms.  A simple tweak can have the mushrooms take out enemies.
+
+```python
+def mushroom(x, y, tags):
+   m = image('mushroom2', pos=(x,y), size=2.5)
+   def _fire_():
+      m2 = image('mushroom2', pos=(x, y+1.5), size=0.5, order=BACK)
+      m2.move_to((choice([-5, WIDTH+5]),y+1.5), callback=m2.destroy)
+      for a in tags:
+         m2.collides(get(a), die)
+      callback(_fire_, randint(1,3))
+   callback(_fire_, randint(1,3))
+mushroom(5,12,['Porter'])
+```
+### Rotating Bridge of Wheels
+Here's a bridge of rotating wheels. You'll only be able to walk on the flat side of the wheel.
+```python
+def bridge(x, y, num, tags):
+   for i in range(num):
+      w = image('wheel1', pos=(x+(2*i), y), size=2, tag=OBSTACLE)
+      def _spin_(w):
+         w.rotate(180)
+         if w.rotate_angle != 180:
+            w.tag = None
+         else:
+            w.tag = OBSTACLE
+         callback(partial(_spin_, w), randint(5,10))
+      _spin_(w)
+bridge(0, 10, 6, ['Porter'])
+```
+
 ### General Challenge Problems
 
 #### Build a crate stairway to heaven

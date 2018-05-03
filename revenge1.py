@@ -33,7 +33,7 @@ for x in range(5):
     image('crate1', pos=(x, 2), tag=OBSTACLE)
 
 # create Porter, give him a mass so he falls down, use arrow keys to move left/right
-p = actor('Porter', pos=(0,-3), size=2, tag='Porter').mass(10).keys()
+p = actor('Porter', pos=(0,-3), size=2, tag='Porter').mass(2).keys()
 
 # throw a punch on the return/enter key
 keydown('return', partial(p.act, ATTACK, 1))
@@ -72,17 +72,22 @@ def hit(enemy, porter):
 
 def emonitor():
    for e in get('enemy'):
+      # the enemy is dead.. destroy it!
       if e.action.startswith(DIE) and e.health == 0:
          e.destruct(1.5)
          continue
+      # the enemy is IDLE.. move it!
       if e.action.startswith(IDLE):
          e.move_to((e.attributes['destination'], e.y))
       elif randint(1,4) == 2:
+         # a random jump!
          e.jump()
       elif randint(1,5) == 2:
+         # a random shoot!
          e.stop()
          shoot(e, ['Porter', 'enemy', 'bat'])
       if e.y >= HEIGHT:
+         # the enemy fell into the void.. kill it!
          e.kill()
 callback(emonitor, 0.5, FOREVER)
 
