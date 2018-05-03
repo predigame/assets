@@ -4,7 +4,7 @@
 # - wacky jumps
 # - duration goal
 # - throw something at zombies
-# have zombies fall out of the sky
+# - have zombies fall out of the sky
 # golden star reward
 # - make the piggy fall and die (fun ways to die)
 # hostage
@@ -64,7 +64,6 @@ def hit(enemy, porter):
    # don't do anything when the enemy is dead
    if enemy.health == 0:
       return
-
    # enemy is moving right and Porter is punching from the left
    if enemy.direction == RIGHT and porter.action == ATTACK_LEFT:
       enemy.kill()
@@ -81,7 +80,9 @@ def hit(enemy, porter):
 
 def emonitor():
    for e in get('enemy'):
-      print('{} ==> {}'.format(e.pos, e.action))
+      if e.action.startswith(DIE) and e.health == 0:
+         e.destruct(1.5)
+         continue
       if e.action.startswith(IDLE):
          e.move_to((e.attributes['destination'], e.y))
       elif randint(1,4) == 2:
@@ -122,11 +123,12 @@ def right():
 callback(right, 6, FOREVER)
 
 # make saw blades fall
-def die(blade, porter):
-   if porter.health > 0:
-       porter.spin(0.25).move_to((porter.pos[0], HEIGHT), animation=DIE_FRONT, callback=porter.kill)
-       text('game over')
-       gameover()
+def die(blade, victim):
+   if victim.health > 0:
+       victim.spin(0.25).move_to((victim.pos[0], HEIGHT), animation=DIE_FRONT, callback=victim.kill)
+       if victim == p:
+           text('game over')
+           gameover()
 
 def fall():
    pos = rand_pos()
@@ -198,3 +200,55 @@ def flyin():
    e.collides(p, die)
    callback(flyin, randint(3,7))
 #callback(flyin, randint(3,7))
+
+def spikeit(x, y, tags):
+   spikes = image('spike2', pos=(x,y-2), size=3).speed(0.25)
+   crate = image('crate1', pos=(x,y), size=3, tag=OBSTACLE)
+   def _up_():
+     for a in tags:
+        spikes.collides(get(a), die)
+     spikes.move_to((x,y-2.5), callback=_down_)
+   def _down_():
+     for a in tags:
+        spikes.collides(get(a), die)
+     spikes.move_to((x,y), callback=_up_)
+   _up_()
+spikeit(7.0,HEIGHT-1, ['Porter', 'enemy'])
+spikeit(10.0,HEIGHT-1, ['Porter', 'enemy'])
+spikeit(13.0,HEIGHT-1, ['Porter', 'enemy'])
+
+def chestomoney(x, y, tags):
+   offset = rand(-1, 1)
+   funnelimg = image('chest2', pos=(x+offset,y), size=2)
+   def _fire_():
+      bag = image('money1', pos=(x+1+offset, y), size=0.5, order=BACK)
+      bag.move_to((x+1+offset, rand_pos()[1]),(randint(x-5, x+5), HEIGHT+5), callback=bag.destroy)
+      for a in tags:
+         bag.collides(get(a), die)
+      callback(_fire_, randint(0,1))
+   callback(_fire_, randint(0,1))
+#chestomoney(2,12, ['Porter', 'enemy', 'Bat'])
+
+def mushroom(x, y, tags):
+   m = image('mushroom2', pos=(x,y), size=2.5)
+   def _fire_():
+      m2 = image('mushroom2', pos=(x, y+1.5), size=0.5, order=BACK)
+      m2.move_to((choice([-5, WIDTH+5]),y+1.5), callback=m2.destroy)
+      for a in tags:
+         m2.collides(get(a), die)
+      callback(_fire_, randint(1,3))
+   callback(_fire_, randint(1,3))
+mushroom(5,12,['Porter'])
+
+def bridge(x, y, num, tags):
+   for i in range(num):
+      w = image('wheel1', pos=(x+(2*i), y), size=2, tag=OBSTACLE)
+      def _spin_(w):
+         w.rotate(180)
+         if w.rotate_angle != 180:
+            w.tag = None
+         else:
+            w.tag = OBSTACLE
+         callback(partial(_spin_, w), randint(5,10))
+      _spin_(w)
+bridge(0, 10, 6, ['Porter'])
