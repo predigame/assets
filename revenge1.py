@@ -91,6 +91,14 @@ def emonitor():
          e.kill()
 callback(emonitor, 0.5, FOREVER)
 
+def die(blade, victim):
+   if victim.health > 0:
+       victim.spin(0.25).move_to((victim.pos[0], HEIGHT), animation=DIE_FRONT, callback=victim.kill)
+       if victim == p:
+           text('game over')
+           gameover()
+
+
 # create an enemy from the left. move right.
 def left():
    e = actor('Zombie-8', pos=(0,0), size=2, tag='enemy').flip()
