@@ -614,20 +614,41 @@ callback(emonitor, 0.5, FOREVER)
 ### Moving Spikes Obstacle
 This obstacle raises spikes through a crate. One touch and there is instant death.
 ```python
-def spikeit(x, y, tags):
-   spikes = image('spike2', pos=(x,y-2), size=3).speed(0.25)
+# spikes coming from the top
+def spiketop(x, y, tags):
+   spike = image('spike2', pos=(x,y-2), size=3).speed(0.33)
    crate = image('crate1', pos=(x,y), size=3, tag=OBSTACLE)
-   def _up_():
+   def _out_():
      for a in tags:
-        spikes.collides(get(a), die)
-     spikes.move_to((x,y-2.5), callback=_down_)
-   def _down_():
+        spike.collides(get(a), die)
+     spike.move_to((x,y-2.5), callback=_in_)
+   def _in_():
      for a in tags:
-        spikes.collides(get(a), die)
-     spikes.move_to((x,y), callback=_up_)
-   _up_()
-spikeit(7.0,HEIGHT-1, ['Porter', 'enemy'])
-spikeit(10.0,HEIGHT-1, ['Porter', 'enemy'])
+        spike.collides(get(a), die)
+     spike.move_to((x,y), callback=_out_)
+   _out_()
+spiketop(7.0, HEIGHT-4, ['Porter'])
+spiketop(10.0,HEIGHT-4, ['Porter'])
+spiketop(16.0,HEIGHT-4, ['Porter'])
+spiketop(19.0,HEIGHT-4, ['Porter'])
+
+# spikes coming from the bottom
+def spikebottom(x, y, tags):
+   spike = image('spike2', pos=(x,y+2), size=3).speed(0.33).rotate(180)
+   crate = image('crate1', pos=(x,y), size=3, tag=OBSTACLE)
+   def _out_():
+     for a in tags:
+        spike.collides(get(a), die)
+     spike.move_to((x,y+2.5), callback=_in_)
+   def _in_():
+     for a in tags:
+        spike.collides(get(a), die)
+     spike.move_to((x,y), callback=_out_)
+   _out_()
+spikebottom(7.0, HEIGHT-10, ['Porter'])
+spikebottom(10.0,HEIGHT-10, ['Porter'])
+spikebottom(16.0,HEIGHT-10, ['Porter'])
+spikebottom(19.0,HEIGHT-10, ['Porter'])
 ```
 
 ### Tossing Money
@@ -647,22 +668,31 @@ def chestomoney(x, y, tags):
 chestomoney(2,12, ['Porter', 'enemy', 'Bat'])
 ```
 ### Firing Mushrooms
-Make sure to jump over these firing mushrooms.  A simple tweak can have the mushrooms take out enemies.
+Make sure to jump over these firing mushrooms.
 
 ```python
+delay = 3.0
+speed = 3.0
 def mushroom(x, y, tags):
    m = image('mushroom2', pos=(x,y), size=2.5)
    def _fire_():
-      m2 = image('mushroom2', pos=(x, y+1.5), size=0.5, order=BACK)
+      global delay
+      delay = delay - 0.1
+      if delay <= 0:
+         delay = 0.1
+      global speed
+      speed = speed + 0.25
+      m2 = image('mushroom2', pos=(x+0.5, y+1.5), size=0.5, order=BACK).speed(speed)
       m2.move_to((choice([-5, WIDTH+5]),y+1.5), callback=m2.destroy)
+      score(1, pos=LOWER_RIGHT)
       for a in tags:
          m2.collides(get(a), die)
-      callback(_fire_, randint(1,3))
-   callback(_fire_, randint(1,3))
-mushroom(5,12,['Porter'])
+      callback(_fire_, delay)
+   callback(_fire_, 3)
+mushroom(10,12,['Porter'])
 ```
 ### Rotating Bridge of Wheels
-Here's a bridge of rotating wheels. You'll only be able to walk on the flat side of the wheel.
+Here's a bridge of rotating wheels. You'll only be able to walk on the flat side of the wheel. Try this obstacle with no ground
 ```python
 def bridge(x, y, num, tags):
    for i in range(num):
@@ -675,7 +705,17 @@ def bridge(x, y, num, tags):
             w.tag = OBSTACLE
          callback(partial(_spin_, w), randint(5,10))
       _spin_(w)
-bridge(0, 10, 6, ['Porter'])
+bridge(0, 10, WIDTH, ['Porter'])
+```
+
+### Add a Goal Sprite
+```python
+# add a goal sprite
+goal = image('barrel3', pos=(WIDTH-2, HEIGHT-3), size=2)
+def win(goal, player):
+   text('Mission Accomplished!')
+   gameover()
+goal.collides(p, win)
 ```
 
 ### General Challenge Problems
