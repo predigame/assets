@@ -708,7 +708,12 @@ def bridge(x, y, num, tags):
 bridge(0, 10, WIDTH, ['Porter'])
 ```
 
-### Add a Goal Sprite
+### Ending a Level
+
+#### Add a goal sprite
+Complete a level if the player reaches the goal sprite. This example places the sprite at the bottom right corner, but the position can be anywhere on the screen.
+
+Want to add some randomness? Try setting position to `pos=rand_pos()` to place the goal sprite at a random location.
 ```python
 # add a goal sprite
 goal = image('barrel3', pos=(WIDTH-2, HEIGHT-3), size=2)
@@ -717,6 +722,48 @@ def win(goal, player):
    gameover()
 goal.collides(p, win)
 ```
+
+#### Countdown Timer (can be for survival or failure)
+Place a countdown timer at the lower left corner of the screen. The timer runs for 	`20` seconds (this can be changed) and calls the `notime()` function when the timer hits zero.
+
+If you want to change this code from failure to survival (meaning that you want to complete the level at the end the timer), change the `text()` label to something that indicates the player won, and remove the `p.kill()` line.
+
+```python
+def notime():
+   text("out of time")
+   p.kill()
+   gameover()
+timer(20, pos=LOWER_LEFT, callback=notime)
+```
+
+#### Stopwatch with a Goal
+This code is the opposite of the countdown timer, rather it counts up from `0` to a particular goal state (`30` in the example).
+
+```python
+def hitgoal():
+   text('You Win!')
+   gameover()
+stopwatch(prefix='Survival: ', goal=30, callback=hitgoal)
+```
+
+#### Kill Counter (score objective)
+This example will complete a level if a particular goal score has been reached. Unlike other examples, we utilize a monitor to periodically check the score. This example will complete a level after `10` kills and assumes the kill counter is on the lower right corner of the screen.
+
+```python
+def killmonitor():
+    if get_score(pos=LOWER_RIGHT) >= 10:
+        text('You Win!')
+        gameover()
+callback(killmonitor, 1, FOREVER)
+```
+
+#### Health Monitor
+
+*coming next week*
+
+#### Bullet Limiter
+
+*coming next week*
 
 ### General Challenge Problems
 

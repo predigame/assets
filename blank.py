@@ -24,6 +24,10 @@ keydown('return', partial(p.act, ATTACK, 1))
 keydown('space', p.jump)
 
 # stopwatch
+def hitgoal():
+   text('You Win!')
+   gameover()
+#stopwatch(prefix='Survival: ', goal=30, callback=hitgoal)
 stopwatch(prefix='Survival: ')
 
 # countdown timer
