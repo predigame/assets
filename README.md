@@ -757,13 +757,101 @@ def killmonitor():
 callback(killmonitor, 1, FOREVER)
 ```
 
-#### Health Monitor
+#### Ending a Level
+There are a few ways to end a level. For our game, we've been using the `gameover()` function. Here's an example:
 
-*coming next week*
+```python
+def hit(enemy, player):
+   player.spin()
+   player.kill()
+   enemy.stop()
+   enemy.act(ATTACK, FOREVER)
+   text('this little piggy is delicious')
+   gameover()
+```
+While this ends the game, it doesn't promote the level.  We can add the following *parameters* to the `gameover()` function to end the game. Here an example makes the game as a **loss** after a `10` second delay.
+
+```python
+gameover(delay=10, exit=LOSE)
+```
+
+Likewise, we can mark a level as a **win** with the following change:
+
+```python
+gameover(delay=5, exit=WIN)
+```
+Make sure to mark every level with a `WIN` or `LOSE` exit code.
 
 #### Bullet Limiter
+Here's an example of how to limit the number of bullets that a player can shoot. Keep in mind that if enemies shoot with the same function they will use your bullets!
 
-*coming next week*
+```python
+BULLETS = 10
+def shoot(a, tags):
+   global BULLETS
+   if BULLETS > 0:
+       a.act(ATTACK,1)
+       b = shape(CIRCLE, YELLOW, pos=(a.x+0.75, a.y+1), size=0.2)
+       b.speed(10)
+       b.move_to((a.facing()[0], (a.y+1)), callback=b.destroy)
+       for x in tags:
+          actors = get(x)
+          if a in actors:
+            actors.remove(a)
+          b.collides(actors, shot)
+       BULLETS = BULLETS - 1
+```
+
+#### Health Monitor
+Here's another version of the `shot` function that limits the impact of a bullet on the player (note that the code, as currently written, only impacts the health of the player -- enemies still die on a single shot). You'll want to replace your existing `shot` function with the one provided below.
+
+```python
+def shot(bullet, victim):
+   prev_health = victim.health
+   victim.health = victim.health - 10
+   bullet.destroy()
+   if victim.tag == 'enemy' or prev_health > 0 and victim.health <= 0:
+       victim.kill()
+       if victim == p:
+          text('You\'ve Been Shot!!')
+          gameover()
+       else:
+          score(1, pos=LOWER_RIGHT)
+
+def __update_status__(p):
+   score("Player Health: {:3d}".format(int(p.health)), color=BLACK, pos=UPPER_RIGHT, method=VALUE)
+callback(partial(__update_status__, p), wait=1, repeat=FOREVER)
+```
+
+
+
+### Wiring Levels
+Once every level has an exit code, it's possible to string them together so that the player can advance from one level to the next or exit the game if the player reaches a losing state.
+
+To do this, take a look at the file `piggy_revenge.sh` this is a bash shell script. Here's the contents of the file for reference:
+
+```bash
+for f in level1 level2 level3
+do
+   file=`echo $f.py`
+   echo Running file $file
+   pred $file
+   if [ $? -ne 1 ]; then
+      exit $?
+   fi
+done
+```
+
+bash, like python, is a programming language. Unlike python, bash is primarily used in the terminal to automate running things. Of particular note is the `for` statement:
+
+```bash
+for f in level1 level2 level3
+```
+This will run `pred level1.py` and then if that game completes with a `WIN` exit code, advance to `pred level2.py` and so on. The script will exit anytime a level completes with a `LOSE` exit code.
+
+You'll want to add each file **NOTE: ** don't provide the `.py` extension.
+
+
 
 ### General Challenge Problems
 
